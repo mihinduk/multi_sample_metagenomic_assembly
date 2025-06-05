@@ -8,7 +8,12 @@
 # Server-optimized metagenomic assembly pipeline
 # For 1912 formalin-fixed lung specimen
 
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 echo "Starting assembly pipeline at $(date)"
+echo "Script directory: $SCRIPT_DIR"
+echo "Working directory: $(pwd)"
 
 # Activate conda environment
 conda activate multi_sample_metagenomic_assembly
@@ -44,18 +49,26 @@ echo "Processing final contigs..."
 cat assembly_results/megahit/final.contigs.fa > assembly_results/all_contigs.fa
 cat assembly_results/metaspades/contigs.fasta >> assembly_results/all_contigs.fa
 
-# Remove redundancy and filter by length
-cd-hit-est \
-    -i assembly_results/all_contigs.fa \
-    -o assembly_results/final_contigs_nr.fa \
-    -c 0.95 \
-    -n 10 \
-    -T 32 \
-    -M 64000
+# Remove redundancy and filter by length (if cd-hit-est is available)
+if command -v cd-hit-est &> /dev/null; then
+    echo "Running cd-hit-est to remove redundancy..."
+    cd-hit-est \
+        -i assembly_results/all_contigs.fa \
+        -o assembly_results/final_contigs_nr.fa \
+        -c 0.95 \
+        -n 10 \
+        -T 32 \
+        -M 64000
+    FINAL_CONTIGS="assembly_results/final_contigs_nr.fa"
+else
+    echo "cd-hit-est not found, skipping redundancy removal step"
+    FINAL_CONTIGS="assembly_results/all_contigs.fa"
+fi
 
 # Generate assembly statistics
-python3 calculate_stats.py \
-    assembly_results/final_contigs_nr.fa \
+python3 "$SCRIPT_DIR/calculate_stats.py" \
+    "$FINAL_CONTIGS" \
     > assembly_results/assembly_stats.txt
 
 echo "Assembly pipeline completed at $(date)"
+echo "Final contigs saved to: $FINAL_CONTIGS"
