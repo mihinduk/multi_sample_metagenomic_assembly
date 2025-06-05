@@ -6,10 +6,28 @@
 #SBATCH --output=assembly_%j.log
 
 # Server-optimized metagenomic assembly pipeline
-# For 1912 formalin-fixed lung specimen
 
 # Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# For SLURM jobs, we need to find the actual script location, not the temp copy
+if [[ -n "${SLURM_JOB_ID}" ]]; then
+    # In SLURM, find the script in the submission directory
+    SCRIPT_DIR="$(dirname "$(scontrol show job ${SLURM_JOB_ID} | grep -oP 'Command=\K[^ ]+' | head -1)")"
+    # If that fails, try to find it relative to working directory
+    if [[ ! -f "$SCRIPT_DIR/calculate_stats.py" ]]; then
+        if [[ -f "multi_sample_metagenomic_assembly/calculate_stats.py" ]]; then
+            SCRIPT_DIR="multi_sample_metagenomic_assembly"
+        elif [[ -f "./calculate_stats.py" ]]; then
+            SCRIPT_DIR="."
+        else
+            echo "ERROR: Cannot find calculate_stats.py"
+            echo "Please ensure the script is run from the correct directory"
+            exit 1
+        fi
+    fi
+else
+    # Not in SLURM, use normal method
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+fi
 
 echo "Starting assembly pipeline at $(date)"
 echo "Script directory: $SCRIPT_DIR"
