@@ -16,7 +16,25 @@ echo "Script directory: $SCRIPT_DIR"
 echo "Working directory: $(pwd)"
 
 # Activate conda environment
-conda activate multi_sample_metagenomic_assembly
+# Source conda.sh for batch jobs
+if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+    source "$HOME/miniconda3/etc/profile.d/conda.sh"
+elif [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
+    source "$HOME/anaconda3/etc/profile.d/conda.sh"
+elif [ -f "/opt/conda/etc/profile.d/conda.sh" ]; then
+    source "/opt/conda/etc/profile.d/conda.sh"
+else
+    echo "ERROR: Could not find conda.sh. Please check your conda installation path."
+    echo "You may need to modify this script with your conda location."
+    exit 1
+fi
+
+conda activate multi_sample_metagenomic_assembly || {
+    echo "ERROR: Could not activate multi_sample_metagenomic_assembly environment"
+    echo "Please ensure the environment is created with:"
+    echo "  conda env create -f $SCRIPT_DIR/environment.yml"
+    exit 1
+}
 
 # Create output directories
 mkdir -p assembly_results/{megahit,metaspades,logs}
