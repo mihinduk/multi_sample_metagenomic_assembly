@@ -1,0 +1,28 @@
+# Assembly outputs
+megahit_assembly/
+metaspades_assembly/
+assembly_results/
+
+# Temporary files
+*.log
+*.tmp
+tmp/
+
+# Large data files (add back via git-lfs if needed)
+*.fastq
+*.fq
+*.fasta
+*.fa
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# System files
+.DS_Store
+.idea/
+.vscode/
+
+# Conda
+.snakemake/

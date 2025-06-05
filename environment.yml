@@ -1,0 +1,21 @@
+name: multi_sample_metagenomic_assembly
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - megahit
+  - spades
+  - quast
+  - kraken2
+  - diamond
+  - bowtie2
+  - samtools
+  - seqtk
+  - fastqc
+  - bbmap
+  - pandas
+  - biopython
+  - matplotlib
+  - seaborn
