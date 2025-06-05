@@ -36,8 +36,8 @@ conda activate multi_sample_metagenomic_assembly || {
     exit 1
 }
 
-# Create output directories
-mkdir -p assembly_results/{megahit,metaspades,logs}
+# Create output directories (but not the assembler directories - they create their own)
+mkdir -p assembly_results/logs
 
 # Run MEGAHIT (fast, memory-efficient)
 echo "Running MEGAHIT assembly..."
