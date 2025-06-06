@@ -23,41 +23,85 @@ A comprehensive metagenomic assembly pipeline for co-assembling multiple samples
 
 ### 1. Clone Repository
 ```bash
-git clone <repository-url>
-cd <repository-name>
+git clone https://github.com/mihinduk/multi_sample_metagenomic_assembly.git
+cd multi_sample_metagenomic_assembly
 ```
 
-### 2. Create Conda Environment
+### 2. Set Up Environment
+
+#### Option A: Full Installation (Recommended)
 ```bash
+# Create conda environment with all dependencies
 conda env create -f environment.yml
+conda activate multi_sample_metagenomic_assembly
+
+# Verify installation
+which megahit
+which metaspades.py
+python -c "import Bio; print('Biopython installed')"
+```
+
+#### Option B: Minimal Installation
+```bash
+# Create environment with core tools only
+conda create -n multi_sample_metagenomic_assembly -c bioconda python=3.9 megahit spades cd-hit biopython -y
 conda activate multi_sample_metagenomic_assembly
 ```
 
-### 3. Prepare Data
-Place your paired-end FASTQ files in the working directory following the naming pattern:
-- `*_R1_*.fq` or `*_R1_*.fastq` for forward reads
-- `*_R2_*.fq` or `*_R2_*.fastq` for reverse reads
+### 3. Prepare Your Data
 
-Then merge all samples:
+#### If running from the repository directory:
 ```bash
+# Copy or link your FASTQ files into the repository
+cp /path/to/your/*_R1_*.fq .
+cp /path/to/your/*_R2_*.fq .
+
+# Merge all samples
 ./merge_for_assembly.sh
+```
+
+#### If running from a directory containing your FASTQ files:
+```bash
+# Clone repository as subdirectory
+git clone https://github.com/mihinduk/multi_sample_metagenomic_assembly.git
+
+# Merge samples
+./multi_sample_metagenomic_assembly/merge_for_assembly.sh
 ```
 
 ### 4. Run Assembly
 
-#### Option A: On HPC/Server (Recommended)
+#### Option A: On HPC with SLURM (Recommended)
 ```bash
-# Adjust SLURM parameters in the script as needed
-sbatch run_assembly_server.sh
+# From directory containing FASTQ files
+sbatch multi_sample_metagenomic_assembly/run_assembly_server.sh
+
+# Monitor progress
+squeue -u $USER
+tail -f assembly_*.log
 ```
 
-#### Option B: Local Machine
+#### Option B: On HPC without SLURM
 ```bash
-# Run MEGAHIT
-./run_megahit.sh
+# Run in background with nohup
+nohup bash multi_sample_metagenomic_assembly/run_assembly_server.sh > assembly.log 2>&1 &
+```
 
-# Run metaSPAdes
+#### Option C: Local Machine
+```bash
+# Activate environment first
+conda activate multi_sample_metagenomic_assembly
+
+# Run assemblers
+./run_megahit.sh
 ./run_metaspades.sh
+
+# Combine and deduplicate
+cat assembly_results/megahit/final.contigs.fa assembly_results/metaspades/contigs.fasta > assembly_results/all_contigs.fa
+cd-hit-est -i assembly_results/all_contigs.fa -o assembly_results/final_contigs_nr.fa -c 0.95 -n 10 -T 8 -M 32000
+
+# Calculate statistics
+python calculate_stats.py assembly_results/final_contigs_nr.fa
 ```
 
 ## System Requirements
@@ -111,10 +155,38 @@ Recommended downstream analyses:
 5. Quality assessment (CheckM, BUSCO)
 
 ## Troubleshooting
-- **Memory errors**: Reduce thread count and k-mer range
-- **Path issues**: Ensure all paths with spaces are properly quoted
-- **Long runtime**: Check log files for bottlenecks
-- **Poor assembly**: Consider adjusting k-mer ranges or minimum contig length
+
+### Common Issues
+
+**"megahit: command not found"**
+- Ensure conda environment is activated: `conda activate multi_sample_metagenomic_assembly`
+- Verify installation: `which megahit`
+
+**"ModuleNotFoundError: No module named 'Bio'"**
+- Install biopython: `conda install -c conda-forge biopython`
+
+**"Output directory already exists"**
+- Remove previous results: `rm -rf assembly_results/`
+
+**SLURM: "conda: command not found"**
+- The script automatically sources conda, but if it fails, add to your `~/.bashrc`:
+  ```bash
+  export PATH="$HOME/miniconda3/bin:$PATH"
+  ```
+
+**Memory errors**
+- Reduce threads: Change `-t 32` to `-t 16` or lower
+- Reduce memory: Change `--memory 128` to `--memory 64`
+- Use fewer k-mers: Change k-mer list to `21,33,55,77,99`
+
+**Path issues with spaces**
+- Run from a directory without spaces in the path
+- Or ensure all paths are properly quoted in scripts
+
+**Poor assembly quality**
+- Check input read quality with FastQC
+- Adjust k-mer ranges based on read length
+- Increase minimum contig length to reduce fragmentation
 
 ## Citation
 If you use this pipeline, please cite:

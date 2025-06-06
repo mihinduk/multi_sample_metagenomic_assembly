@@ -7,6 +7,11 @@ dependencies:
   - python=3.9
   - megahit
   - spades
+  - cd-hit
+  - biopython
+  - numpy
+  - pandas
+  # Optional tools for downstream analysis
   - quast
   - kraken2
   - diamond
@@ -15,7 +20,5 @@ dependencies:
   - seqtk
   - fastqc
   - bbmap
-  - pandas
-  - biopython
   - matplotlib
   - seaborn
