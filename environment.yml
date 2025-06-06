@@ -11,9 +11,10 @@ dependencies:
   - biopython
   - numpy
   - pandas
+  - kraken2
+  - kraken2-build
   # Optional tools for downstream analysis
   - quast
-  - kraken2
   - diamond
   - bowtie2
   - samtools

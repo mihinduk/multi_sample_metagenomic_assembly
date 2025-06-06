@@ -106,5 +106,27 @@ python3 "$SCRIPT_DIR/calculate_stats.py" \
     "$FINAL_CONTIGS" \
     > assembly_results/assembly_stats.txt
 
+# Kingdom-level triage with Kraken2 (if database exists)
+if [ -d "kraken2_db" ] || [ -d "$SCRIPT_DIR/kraken2_db" ]; then
+    echo "Running kingdom-level triage with Kraken2..."
+    
+    # Find database location
+    if [ -d "kraken2_db" ]; then
+        KRAKEN_DB="kraken2_db"
+    else
+        KRAKEN_DB="$SCRIPT_DIR/kraken2_db"
+    fi
+    
+    python3 "$SCRIPT_DIR/triage_contigs_kraken2.py" \
+        "$FINAL_CONTIGS" \
+        --db "$KRAKEN_DB" \
+        --output-dir assembly_results/kingdom_triage \
+        --threads 32 \
+        2>&1 | tee assembly_results/logs/kraken2_triage.log
+else
+    echo "Kraken2 database not found. Skipping kingdom-level triage."
+    echo "To enable triage, run: bash $SCRIPT_DIR/setup_kraken2_db.sh"
+fi
+
 echo "Assembly pipeline completed at $(date)"
 echo "Final contigs saved to: $FINAL_CONTIGS"
